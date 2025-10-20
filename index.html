@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Organigrama del Proyecto</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  :root {
+    --bg: #f7fbfd;
+    --card-bg: #ffffff;
+    --card-hover-bg: #f0f8ff;
+    --text-color: #0f172a;
+    --muted-text: #6b7280;
+    --line-color: #a0a7b4; 
+    --accent-color: #0ea5a4;
+    --status-alta: #ef4444;
+    --status-baja: #3b82f6;
+    --border-color: rgba(15,23,0.08);
+    --shadow: 0 4px 12px rgba(2,6,23,0.08);
+  }
+
+  body {
+    font-family: Inter, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg, #eef7f8 0%, var(--bg) 100%);
+    /* --- CAMBIO: Padding movido del contenedor al body --- */
+    margin: 24px; 
+    padding: 20px; /* Nuevo padding para el cuerpo */
+    /* ---------------------------------------------------- */
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    margin: 0 0 20px 0;
+    color: #052f2f;
+  }
+
+  /* --- CAMBIO: Se eliminó el botón de descarga --- */
+  /* .download-btn { ... } */
+  /* ----------------------------------------------- */
+
+  /* --- CAMBIO: Contenedor del organigrama sin padding --- */
+  .org-chart-container {
+    /* Se eliminó padding: 20px; */ 
+padding: 100px;
+    width: 100%; 
+    text-align: center; 
+    flex-grow: 1; /* Permite que ocupe el espacio restante */
+  }
+  /* --------------------------------------------------- */
+
+  /* El Árbol (sin cambios) */
+  .tree {
+    display: inline-block; 
+  }
+
+  .tree ul {
+    padding-top: 20px;
+    position: relative;
+    transition: all 0.5s;
+    display: flex;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+
+  .tree li {
+    text-align: center;
+    list-style-type: none;
+    position: relative;
+    padding: 20px 5px 0 5px;
+    transition: all 0.5s;
+    flex-shrink: 0;
+    /* --- CAMBIO: Añadido min-width a los LI para asegurar espacio --- */
+    min-width: 200px; /* Asegura que cada columna tenga un mínimo de ancho */
+    /* --------------------------------------------------------------- */
+  }
+
+  /* Conectores (sin cambios) */
+  .tree li::before, .tree li::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 50%;
+    border-top: 2px solid var(--line-color);
+    width: 50%;
+    height: 20px;
+  }
+  .tree li::after {
+    right: auto;
+    left: 50%;
+    border-left: 2px solid var(--line-color);
+  }
+  .tree li:only-child::after, .tree li:only-child::before { display: none; }
+  .tree li:only-child { padding-top: 0; }
+  .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+  .tree li:last-child::before {
+    border-right: 2px solid var(--line-color);
+    border-radius: 0 5px 0 0;
+  }
+  .tree li:first-child::after { border-radius: 5px 0 0 0; }
+  .tree ul ul::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    border-left: 2px solid var(--line-color);
+    width: 0;
+    height: 20px;
+  }
+
+  /* Tarjeta (sin cambios en estilo) */
+  .tree li .node-card {
+    border: 1px solid var(--border-color);
+    padding: 10px 15px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    display: inline-block;
+    border-radius: 10px;
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease-in-out;
+    min-width: 180px;
+    max-width: 250px;
+    text-align: left; 
+    cursor: pointer;
+  }
+  .tree li .node-card:hover {
+    background: var(--card-hover-bg);
+    transform: translateY(-2px);
+  }
+  .node-card .main-info {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 5px;
+    color: var(--accent-color);
+  }
+  .node-card .role-name {
+    font-size: 0.85rem;
+    color: var(--text-color);
+    margin-bottom: 5px;
+  }
+  .node-card .details {
+    display: none; /* Oculto por defecto */
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    color: var(--muted-text);
+  }
+  .node-card.expanded .details { display: block; }
+  .node-card .details div { margin-bottom: 3px; }
+
+  /* Estilos para Poder / Interés (sin cambios) */
+  .power-interest-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .power-tag,
+  .interest-tag {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.7rem;
+    color: white;
+  }
+  .power-tag.alta, .interest-tag.alta { background: var(--status-alta); }
+  .power-tag.baja, .interest-tag.baja { background: var(--status-baja); }
+
+  /* Leyenda actualizada (sin cambios en estilo, pero los elementos se adaptarán) */
+  .legend {
+    position: fixed; 
+    top: 10px;
+    left: 10px;
+    z-index: 1000; 
+    display: flex;
+    flex-direction: column; 
+    gap: 8px; 
+    align-items: flex-start; 
+    color: var(--muted-text);
+    font-size: 0.9rem;
+    padding: 10px 15px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+
+  .legend .chip {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: #f0f8ff;
+    border: 1px solid var(--border-color);
+    font-size: 0.8rem; 
+  }
+  .chip .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  /* Responsive (sin cambios) */
+  @media only screen and (max-width: 768px) {
+    .tree li { padding: 10px 0; }
+    .tree li::before, .tree li::after, .tree ul ul::before { border-width: 1px; }
+    .tree li .node-card {
+      min-width: unset;
+      width: 150px;
+      padding: 8px 10px;
+    }
+    .node-card .main-info { font-size: 0.9rem; }
+    .node-card .role-name { font-size: 0.75rem; }
+    .node-card .details { font-size: 0.7rem; }
+    h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+  <h1>Organigrama del Proyecto</h1>
+
+  <div class="org-chart-container" id="organigrama">
+    <div class="tree">
+      <ul>
+        <li>
+          <div class="node-card" onclick="toggleDetails(this)">
+            <div class="main-info">Profesora Titular / Titular del Proyecto</div>
+            <div class="role-name">Hilda Justina Godínez Ramos</div>
+            <div class="details">
+              <div>✉️ hilda.godinez@ipn.mx</div>
+              <div>📱 55 9023 8756</div>
+              <div class="power-interest-grid">
+                <div class="power-tag alta">Poder: Alto</div>
+                <div class="interest-tag alta">Interés: Alto</div>
+              </div>
+            </div>
+          </div>
+          <ul>
+            <li>
+              <div class="node-card" onclick="toggleDetails(this)">
+                <div class="main-info">Patrocinador</div>
+                <div class="role-name">Francisco Fabián González de la O</div>
+                <div class="details">
+                  <div>✉️ francisco.delao@ipn.mx</div>
+                  <div>📱 55 6732 1256</div>
+                  <div class="power-interest-grid">
+                    <div class="power-tag alta">Poder: Alto</div>
+                    <div class="interest-tag alta">Interés: Alto</div>
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div class="node-card" onclick="toggleDetails(this)">
+                <div class="main-info">Líder de Proyecto / Project Manager</div>
+                <div class="role-name">Alison Michell Castillo Alonso</div>
+                <div class="details">
+                  <div>✉️ alison.castillo@jardindigital.com</div>
+                  <div>📱 55 1122 3344</div>
+                  <div class="power-interest-grid">
+                    <div class="power-tag alta">Poder: Alto</div>
+                    <div class="interest-tag alta">Interés: Alto</div>
+                  </div>
+                </div>
+              </div>
+              <ul>
+                <li>
+                  <div class="node-card" onclick="toggleDetails(this)">
+                    <div class="main-info">Ingeniero de Software / Líder Técnico</div>
+                    <div class="role-name">Omar Lorenzo Pacheco</div>
+                    <div class="details">
+                      <div>✉️ omar.pacheco@jardindigital.com</div>
+                      <div>📱 55 2233 4455</div>
+                      <div class="power-interest-grid">
+                        <div class="power-tag alta">Poder: Alto</div>
+                        <div class="interest-tag alta">Interés: Alto</div>
+                      </div>
+                    </div>
+                  </div>
+                  <ul>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Senior Developer</div>
+                        <div class="role-name">Esteban Guillermo Morales Velázquez</div>
+                        <div class="details">
+                          <div>✉️ esteban.morales@jardindigital.com</div>
+                          <div>📱 55 3344 5566</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag alta">Interés: Alto</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">UX/UI Designer / Jr Developer</div>
+                        <div class="role-name">Garrido Reyes Jimena Marlene</div>
+                        <div class="details">
+                          <div>✉️ jimena.garrido@jardindigital.com</div>
+                          <div>📱 55 4455 6677</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag alta">Interés: Alto</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Junior Developer</div>
+                        <div class="role-name">Samuel Domínguez Virelas</div>
+                        <div class="details">
+                          <div>✉️ samuel.dominguez@jardindigital.com</div>
+                          <div>📱 55 5566 7788</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag alta">Interés: Alto</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <div class="node-card" onclick="toggleDetails(this)">
+                    <div class="main-info">Director General</div>
+                    <div class="role-name">Carlos Mendoza</div>
+                    <div class="details">
+                      <div>✉️ carlos.mendoza@floreriavalle.mx</div>
+                      <div>📱 55 8765 4321</div>
+                      <div class="power-interest-grid">
+                        <div class="power-tag alta">Poder: Alto</div>
+                        <div class="interest-tag alta">Interés: Alto</div>
+                      </div>
+                    </div>
+                  </div>
+                  <ul>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Gerente de Marketing / Cliente Clave</div>
+                        <div class="role-name">Alejandro Torres</div>
+                        <div class="details">
+                          <div>✉️ alejandro.torres@floreriavalle.mx</div>
+                          <div>📱 55 4321 8756</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag alta">Interés: Alto</div>
+                          </div>
+                        </div>
+                      </div>
+                      <ul>
+                        <li>
+                          <div class="node-card" onclick="toggleDetails(this)">
+                            <div class="main-info">Community Manager</div>
+                            <div class="role-name">Lucía Fernández</div>
+                            <div class="details">
+                              <div>✉️ lucia.fernandez@floreriavalle.mx</div>
+                              <div>📱 55 4567 8901</div>
+                              <div class="power-interest-grid">
+                                <div class="power-tag baja">Poder: Bajo</div>
+                                <div class="interest-tag baja">Interés: Bajo</div>
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Gerente de Tienda / Usuario Clave</div>
+                        <div class="role-name">Ana Torres</div>
+                        <div class="details">
+                          <div>✉️ ana.torres@floreriavalle.mx</div>
+                          <div>📱 55 1231 2345</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag baja">Interés: Bajo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Encargada de Logística</div>
+                        <div class="role-name">Gabriela Ortiz</div>
+                        <div class="details">
+                          <div>✉️ gabriela.ortiz@floreriavalle.mx</div>
+                          <div>📱 55 5050 6060</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag baja">Interés: Bajo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Encargado de Compras</div>
+                        <div class="role-name">Jorge Ríos</div>
+                        <div class="details">
+                          <div>✉️ jorge.rios@floreriavalle.mx</div>
+                          <div>📱 55 8901 2345</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag baja">Interés: Bajo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Atención al Cliente</div>
+                        <div class="role-name">Pedro Infante</div>
+                        <div class="details">
+                          <div>✉️ pedro.infante@floreriavalle.mx</div>
+                          <div>📱 55 6789 0123</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag baja">Interés: Bajo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Contador / Supervisor Financiero</div>
+                        <div class="role-name">Omar Sánchez</div>
+                        <div class="details">
+                          <div>✉️ omar.sanchez@floreriavalle.mx</div>
+                          <div>📱 55 1212 3434</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag alta">Poder: Alto</div>
+                            <div class="interest-tag baja">Interés: Bajo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Florista Principal</div>
+                        <div class="role-name">Roberto Aguilar</div>
+                        <div class="details">
+                          <div>✉️ roberto.aguilar@floreriavalle.mx</div>
+                          <div>📱 55 9898 7676</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag baja">Interés: Bajo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Asesora Legal</div>
+                        <div class="role-name">Angélica Nava</div>
+                        <div class="details">
+                          <div>✉️ angelica.nava@floreriavalle.mx</div>
+                          <div>📱 55 2323 6767</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag alta">Poder: Alto</div>
+                            <div class="interest-tag baja">Interés: Bajo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <div class="node-card" onclick="toggleDetails(this)">
+                    <div class="main-info">Gerente de Integraciones</div>
+                    <div class="role-name">Ricardo Peña</div>
+                    <div class="details">
+                      <div>✉️ ricardo.pena@mercadopago.com</div>
+                      <div>📱 55 1122 3344</div>
+                      <div class="power-interest-grid">
+                        <div class="power-tag baja">Poder: Bajo</div>
+                        <div class="interest-tag alta">Interés: Alto</div>
+                      </div>
+                    </div>
+                  </div>
+                  <ul>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Analista de Fraude</div>
+                        <div class="role-name">Sandra Navarro</div>
+                        <div class="details">
+                          <div>✉️ sandra.navarro@mercadopago.com</div>
+                          <div>📱 55 7890 1234</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag baja">Interés: Bajo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+                 <li>
+                  <div class="node-card" onclick="toggleDetails(this)">
+                    <div class="main-info">Ejecutiva de Cuentas</div>
+                    <div class="role-name">Jimena Vargas</div>
+                    <div class="details">
+                      <div>✉️ jimena.vargas@seocreativa.com</div>
+                      <div>📱 55 6677 8899</div>
+                      <div class="power-interest-grid">
+                        <div class="power-tag baja">Poder: Bajo</div>
+                        <div class="interest-tag alta">Interés: Alto</div>
+                      </div>
+                    </div>
+                  </div>
+                  <ul>
+                    <li>
+                      <div class="node-card" onclick="toggleDetails(this)">
+                        <div class="main-info">Especialista en Contenido</div>
+                        <div class="role-name">Laura Zapata</div>
+                        <div class="details">
+                          <div>✉️ laura.zapata@seocreativa.com</div>
+                          <div>📱 55 2345 6789</div>
+                          <div class="power-interest-grid">
+                            <div class="power-tag baja">Poder: Bajo</div>
+                            <div class="interest-tag baja">Interés: Bajo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <div class="node-card" onclick="toggleDetails(this)">
+                    <div class="main-info">Coordinador de Flotilla</div>
+                    <div class="role-name">Luis Estrada</div>
+                    <div class="details">
+                      <div>✉️ luis.estrada@logisticaexpress.mx</div>
+                      <div>📱 55 7070 8080</div>
+                      <div class="power-interest-grid">
+                        <div class="power-tag baja">Poder: Bajo</div>
+                        <div class="interest-tag baja">Interés: Bajo</div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      </div>
+  </div>
+
+  <div class="legend">
+    <div class="chip"><span class="dot" style="background:var(--status-alta)"></span>Poder / Interés Alto</div>
+    <div class="chip"><span class="dot" style="background:var(--status-baja)"></span>Poder / Interés Bajo</div>
+  </div>
+  <script>
+  function toggleDetails(cardElement) {
+    cardElement.classList.toggle('expanded');
+  }
+
+  // --- CAMBIO: Se eliminó la función de descarga de PDF ---
+  /*
+  async function descargarPDF() {
+    const { jsPDF } = window.jspdf;
+    const chartContainer = document.getElementById('organigrama');
+    const btn = document.querySelector('.download-btn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Generando...';
+    btn.disabled = true;
+
+    const allCards = document.querySelectorAll('.node-card');
+    allCards.forEach(card => {
+      card.classList.add('expanded');
+    });
+
+    const canvas = await html2canvas(chartContainer, {
+      backgroundColor: 'white',
+      scale: 2, 
+      scrollX: -window.scrollX,
+      scrollY: -window.scrollY,
+      windowWidth: chartContainer.scrollWidth, 
+      windowHeight: chartContainer.scrollHeight
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+
+    const pdf = new jsPDF({
+      orientation: 'l',
+      unit: 'pt',
+      format: [imgWidth, imgHeight]
+    });
+
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    pdf.save('organigrama-proyecto-completo.pdf');
+
+    allCards.forEach(card => {
+      card.classList.remove('expanded');
+    });
+
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+  */
+  // --- FIN DE CAMBIO: Función de descarga eliminada ---
+</script>
+</body>
+</html>
